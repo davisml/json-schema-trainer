@@ -1,7 +1,11 @@
 import _ from 'underscore'
 
 const getSchemaType = (object) => {
-	if (_.isNumber(object)) {
+	if (_.isNull(object)) {
+		return 'null'
+	} else if (_.isBoolean(object)) {
+		return 'boolean'
+	} else if (_.isNumber(object)) {
 		return 'number'
 	} else if (_.isString(object)) {
 		return 'string'
@@ -17,7 +21,7 @@ class SchemaTrainerProperty {
 		this.options = options
 		this.schema = null
 
-		this.types = []
+		this.types = {}
 		this.values = []
 		this.properties = {}
 	}
@@ -34,54 +38,68 @@ class SchemaTrainerProperty {
 		const type = getSchemaType(object)
 		const {options} = this
 
-		this.types = _.union(this.types, [type])
+		this.types[type] = true
 
-		if (type == 'string') {
-			this.values = _.union(this.values, [object])
-		} else if (type == 'number') {
-			this.values = _.union(this.values, [object])
+		switch(type) {
+			case 'string':
+				this.values = _.union(this.values, [object])
+				return
 
-			if (options.setMinNumber) {
-				if (_.has(this, 'minNumber')) {
-					this.minNumber = Math.max(object, this.minNumber)
-				} else {
-					this.minNumber = object
+			case 'number':
+				this.values = _.union(this.values, [object])
+
+				if (options.setMinNumber) {
+					if (_.has(this, 'minNumber')) {
+						this.minNumber = Math.max(object, this.minNumber)
+					} else {
+						this.minNumber = object
+					}
 				}
-			}
 
-			if (options.setMaxNumber) {
-				if (_.has(this, 'maxNumber')) {
-					this.maxNumber = Math.min(object, this.maxNumber)
-				} else {
-					this.maxNumber = object
+				if (options.setMaxNumber) {
+					if (_.has(this, 'maxNumber')) {
+						this.maxNumber = Math.min(object, this.maxNumber)
+					} else {
+						this.maxNumber = object
+					}
 				}
-			}
-		} else if (type == 'object') {
-			_.forEach(object, (value, key) => {
-				this.getProperty(key).train(value)
-			})
 
-			if (options.setRequired) {
-				const required = _.keys(object)
+				return
 
-				if (!this.requiredProperties) {
-					this.requiredProperties = required
-				} else {
-					this.requiredProperties = _.intersection(required)
+			case 'object':
+				_.forEach(object, (value, key) => {
+					this.getProperty(key).train(value)
+				})
+
+				if (options.setRequired) {
+					const required = _.keys(object)
+
+					if (!this.requiredProperties) {
+						this.requiredProperties = required
+					} else {
+						this.requiredProperties = _.intersection(required)
+					}
 				}
-			}
-		} else if (type === 'array') {
-			if (options.setMinItems) {
-				if (_.has(this, 'minItems')) {
-					this.minItems = Math.max(object.length, this.minItems)
-				} else {
-					this.minItems = object.length
+
+				return
+
+			case 'array':
+				if (options.setMinItems) {
+					if (_.has(this, 'minItems')) {
+						this.minItems = Math.max(object.length, this.minItems)
+					} else {
+						this.minItems = object.length
+					}
 				}
-			}
-			
-			_.forEach(object, (item) => {
-				this.getProperty('item').train(item)
-			})
+				
+				_.forEach(object, (item) => {
+					this.getProperty('item').train(item)
+				})
+
+				return
+
+			default:
+				return
 		}
 	}
 
@@ -90,42 +108,66 @@ class SchemaTrainerProperty {
 		
 		let schema = {}
 		let type = null
-
-		if (this.types.length == 1) {
-			schema.type = type = this.types[0]
-		} else if (this.types.length > 0) {
-			schema.type = this.types
-		}
-
-		if (this.requiredProperties && this.requiredProperties.length > 0) {
-			schema.required = this.requiredProperties
-		}
-
-		if (type == 'array') {
-			schema.item = this.getProperty('item').toJS()
-		} else if (type == 'object') {
-			schema.properties = {}
-
-			_.forEach(this.properties, (schemaProp, key) => {
-				schema.properties[key] = schemaProp.toJS()
-			})
-		} else if (type == 'string') {
-			// Test if string could be an enum
-			if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
-				delete schema.type
-				schema.enum = this.values
-			}
-		} else if (type == 'number') {
-			if (options.setMinNumber) {
-				schema.minimum = this.minNumber
-			}
-
-			if (options.setMaxNumber) {
-				schema.maximum = this.maxNumber
+		
+		// Check if we're defined as a boolean and a number
+		if (this.types.number && this.types.boolean && types.length == 2) {
+			schema.type = type = 'number'
+		} else {
+			const types = _.keys(this.types)
+			
+			if (types.length == 1) {
+				schema.type = type = types[0]
+			} else if (types.length > 0) {
+				schema.type = types
 			}
 		}
+		
+		switch(type) {
+			case 'array': {
+				schema.item = this.getProperty('item').toJS()
 
-		return schema
+				return schema
+			}
+
+			case 'object': {
+				schema.properties = {}
+
+				_.forEach(this.properties, (schemaProp, key) => {
+					schema.properties[key] = schemaProp.toJS()
+				})
+
+				// Add required properties if we have them set
+				if (this.requiredProperties && this.requiredProperties.length > 0) {
+					schema.required = this.requiredProperties
+				}
+
+				return schema
+			}
+
+			case 'string': {
+				if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
+					delete schema.type
+					schema.enum = this.values
+				}
+
+				return schema
+			}
+
+			case 'number': {
+				if (options.setMinNumber) {
+					schema.minimum = this.minNumber
+				}
+
+				if (options.setMaxNumber) {
+					schema.maximum = this.maxNumber
+				}
+
+				return schema
+			}
+
+			default:
+				return schema
+		}
 	}
 }
 
