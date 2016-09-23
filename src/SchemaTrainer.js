@@ -138,7 +138,7 @@ class SchemaTrainer extends SchemaTrainerProperty {
 			setMaxNumber: false,
 			setRequired: true,
 			detectEnum: true,
-			maxEnum: 5
+			maxEnum: 2
 		}))
 	}
 }
