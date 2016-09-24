@@ -45,7 +45,6 @@ Call toJS() to return a javascript object of the JSON Schema
 ```
 {
     type: 'object',
-    required: ['gender', 'name'],
     properties: {
         gender: {
             enum: ['male', 'female']
@@ -53,7 +52,8 @@ Call toJS() to return a javascript object of the JSON Schema
         name: {
             type: 'string'
         }
-    }
+    },
+    required: ['gender', 'name']
 }
 ```
 
