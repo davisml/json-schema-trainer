@@ -90,13 +90,13 @@ Example schema generated from https://anapioficeandfire.com/api/characters/*
         },
         "titles": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string"
             }
         },
         "aliases": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string"
             }
         },
@@ -111,34 +111,34 @@ Example schema generated from https://anapioficeandfire.com/api/characters/*
         },
         "allegiances": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string",
                 "format": "uri"
             }
         },
         "books": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string",
                 "format": "uri"
             }
         },
         "povBooks": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string",
                 "format": "uri"
             }
         },
         "tvSeries": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string"
             }
         },
         "playedBy": {
             "type": "array",
-            "item": {
+            "items": {
                 "type": "string"
             }
         }

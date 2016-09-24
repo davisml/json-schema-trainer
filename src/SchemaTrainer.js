@@ -1,5 +1,19 @@
 import _ from 'underscore'
 
+const $schema = 'http://json-schema.org/draft-04/schema#'
+
+const defaultOptions = {
+	setMinItems: true,
+	setMaxItems: false,
+	setMinNumber: false,
+	setMaxNumber: false,
+	setRequired: true,
+	detectEnum: true,
+	enumMaxLength: 10,
+	maxEnum: 4
+}
+
+// Find the Schema type for a JavaScript object
 const getSchemaType = (object) => {
 	if (_.isNull(object))
 		return 'null'
@@ -17,8 +31,12 @@ const getSchemaType = (object) => {
 	return null
 }
 
+// Regex for detecting string formats
 const urlRegex = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i
 const emailRegex = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+
+// SchemaTrainerProperty represents a JSON Schema object that is being trained.
+// It determines it's types, formats based on the object it's been trained with.
 
 class SchemaTrainerProperty {
 	constructor(options) {
@@ -51,11 +69,11 @@ class SchemaTrainerProperty {
 
 		switch(type) {
 			case 'string':
-				if (!urlRegex.test(object)) {
+				if (this.formats.uri && !urlRegex.test(object)) {
 					this.formats.uri = false
 				}
 
-				if (!emailRegex.test(object)) {
+				if (this.formats.email && !emailRegex.test(object)) {
 					this.formats.email = false
 				}
 
@@ -108,9 +126,9 @@ class SchemaTrainerProperty {
 					}
 				}
 				
-				_.forEach(object, (item) => {
-					this.getProperty('item').train(item)
-				})
+				const itemsProp = this.getProperty('items')
+				
+				_.forEach(object, (item) => itemsProp.train(item))
 
 				return
 
@@ -140,7 +158,7 @@ class SchemaTrainerProperty {
 
 		switch(type) {
 			case 'array':
-				schema.item = this.getProperty('item').toJS()
+				schema.items = this.getProperty('items').toJS()
 				return schema
 
 			case 'object':
@@ -208,22 +226,11 @@ class SchemaTrainerProperty {
 
 class SchemaTrainer extends SchemaTrainerProperty {
 	constructor(options = {}) {
-		super(_.defaults(options, {
-			setMinItems: true,
-			setMaxItems: false,
-			setMinNumber: false,
-			setMaxNumber: false,
-			setRequired: true,
-			detectEnum: true,
-			enumMaxLength: 10,
-			maxEnum: 4
-		}))
+		super(_.defaults(options, defaultOptions))
 	}
 
 	toJS() {
-		return _.extend({
-			$schema: "http://json-schema.org/draft-04/schema#"
-		}, super.toJS())
+		return _.extend({ $schema }, super.toJS())
 	}
 }
 

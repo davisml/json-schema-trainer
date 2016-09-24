@@ -28,6 +28,9 @@ function testSchema(schema) {
 	console.log("All " + responseItems.length + " training items validated")
 }
 
+
+console.log("Fetch some JSON")
+
 const shows = ['girls', 'mad', 'amazing', 'unknown']
 
 shows.forEach((show) => {
@@ -41,10 +44,9 @@ shows.forEach((show) => {
 		if (responseItems.length === shows.length) {
 			testSchema(schemaTrainer.toJS())
 		}
-		// console.log(JSON.stringify(schemaTrainer.toJS()))
-
-		// process.exit()
-		// http://api.tvmaze.com/search/shows?q=girls
+	}).catch((error) => {
+		console.error(error)
+		// response
 	})
 })
 
