@@ -40,113 +40,123 @@ schemaTrainer.train({
 console.log(schemaTrainer.toJS())
 ```
 
-Call toJS() to return a JSON Schema
+Call toJS() to return a javascript object of the JSON Schema
 
 ```
-{ type: 'object',
-  required: [ 'gender', 'name' ],
-  properties: { gender: { enum: [Object] }, name: { type: 'string' } } }
+{
+    type: 'object',
+    required: ['gender', 'name'],
+    properties: {
+        gender: {
+            enum: ['male', 'female']
+        },
+        name: {
+            type: 'string'
+        }
+    }
+}
 ```
 
-Example schema generated from https://anapioficeandfire.com/api/characters/2
+Example schema generated from https://anapioficeandfire.com/api/characters/*
 
 ```javascript
 {
-   "type":"object",
-   "required":[
-      "url",
-      "name",
-      "gender",
-      "culture",
-      "born",
-      "died",
-      "titles",
-      "aliases",
-      "father",
-      "mother",
-      "spouse",
-      "allegiances",
-      "books",
-      "povBooks",
-      "tvSeries",
-      "playedBy"
-   ],
-   "properties":{
-      "url":{
-         "type":"string"
-      },
-      "name":{
-         "type":"string"
-      },
-      "gender":{
-         "enum":[
-            "Male",
-            "Female"
-         ]
-      },
-      "culture":{
-         "type":"string"
-      },
-      "born":{
-         "type":"string"
-      },
-      "died":{
-         "type":"string"
-      },
-      "titles":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      },
-      "aliases":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      },
-      "father":{
-         "type":"string"
-      },
-      "mother":{
-         "type":"string"
-      },
-      "spouse":{
-         "type":"string"
-      },
-      "allegiances":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      },
-      "books":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      },
-      "povBooks":{
-         "type":"array",
-         "item":{
+    "type": "object",
+    "properties": {
+        "url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "name": {
+            "type": "string"
+        },
+        "gender": {
             "enum":[
-               "https://anapioficeandfire.com/api/books/5",
-               "https://anapioficeandfire.com/api/books/8"
+                "Female",
+                "Male"
             ]
-         }
-      },
-      "tvSeries":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      },
-      "playedBy":{
-         "type":"array",
-         "item":{
-            "type":"string"
-         }
-      }
-   }
+        },
+        "culture": {
+            "type": "string"
+        },
+        "born": {
+            "type": "string"
+        },
+        "died": {
+            "type": "string"
+        },
+        "titles": {
+            "type": "array",
+            "item": {
+                "type": "string"
+            }
+        },
+        "aliases": {
+            "type": "array",
+            "item": {
+                "type": "string"
+            }
+        },
+        "father": {
+            "type": "string"
+        },
+        "mother": {
+            "type": "string"
+        },
+        "spouse": {
+            "type": "string"
+        },
+        "allegiances": {
+            "type": "array",
+            "item": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "books": {
+            "type": "array",
+            "item": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "povBooks": {
+            "type": "array",
+            "item": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "tvSeries": {
+            "type": "array",
+            "item": {
+                "type": "string"
+            }
+        },
+        "playedBy": {
+            "type": "array",
+            "item": {
+                "type": "string"
+            }
+        }
+    },
+    "required":[
+        "url",
+        "name",
+        "gender",
+        "culture",
+        "born",
+        "died",
+        "titles",
+        "aliases",
+        "father",
+        "mother",
+        "spouse",
+        "allegiances",
+        "books",
+        "povBooks",
+        "tvSeries",
+        "playedBy"
+    ]
 }
 ```
