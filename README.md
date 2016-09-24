@@ -8,6 +8,7 @@ Create JSON Schemas through training with objects.
 * Set required properties
 * Set minimum number value
 * Set minimum array length
+* Detect string format (uri and email supported)
 * Create enum properties based on the number of options
 
 ## Example
@@ -40,20 +41,21 @@ schemaTrainer.train({
 console.log(schemaTrainer.toJS())
 ```
 
-Call toJS() to return a javascript object of the JSON Schema
+Call toJS() to return an object with the JSON Schema
 
 ```
 {
-    type: 'object',
-    properties: {
-        gender: {
-            enum: ['male', 'female']
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "gender": {
+            "enum": ["male", "female"]
         },
-        name: {
-            type: 'string'
+        "name": {
+            "type": "string"
         }
     },
-    required: ['gender', 'name']
+    "required": ["gender", "name"]
 }
 ```
 
@@ -61,6 +63,7 @@ Example schema generated from https://anapioficeandfire.com/api/characters/*
 
 ```javascript
 {
+    "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "properties": {
         "url": {
