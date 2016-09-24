@@ -43,7 +43,7 @@ console.log(schemaTrainer.toJS())
 
 Call toJS() to return an object with the JSON Schema
 
-```
+```javascript
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
