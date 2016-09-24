@@ -1,37 +1,24 @@
 import _ from 'underscore'
-// import AJV from 'ajv'
 
 const getSchemaType = (object) => {
-	if (_.isNull(object)) {
+	if (_.isNull(object))
 		return 'null'
-	} else if (_.isBoolean(object)) {
+	else if (_.isBoolean(object))
 		return 'boolean'
-	} else if (_.isNumber(object)) {
+	else if (_.isNumber(object))
 		return 'number'
-	} else if (_.isString(object)) {
+	else if (_.isString(object))
 		return 'string'
-	} else if (_.isArray(object)) {
+	else if (_.isArray(object))
 		return 'array'
-	} else if (_.isObject(object)) {
+	else if (_.isObject(object))
 		return 'object'
-	}
+	
+	return null
 }
 
-// const emailRegex = 
 const urlRegex = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i
 const emailRegex = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
-// const urlSchema = {
-// 	type: 'string',
-// 	pattern: "^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$"
-// }
-
-// const emailSchema = {
-//   "type": 'string',
-//   "pattern": "/^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i"
-// }
-
-// const ajv = new AJV
-// const validURL = ajv.compile(urlSchema)
 
 class SchemaTrainerProperty {
 	constructor(options) {
@@ -107,7 +94,7 @@ class SchemaTrainerProperty {
 					if (!this.requiredProperties)
 						this.requiredProperties = required
 					else
-						this.requiredProperties = _.intersection(required)
+						this.requiredProperties = _.intersection(this.requiredProperties, required)
 				}
 
 				return
@@ -184,8 +171,21 @@ class SchemaTrainerProperty {
 					schema.format = formats[0]
 				} else {
 					if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
-						delete schema.type
-						schema.enum = this.values
+						let passedTest = true
+
+						for (let i = 0; i < this.values.length; i++) {
+							const value = this.values[i]
+
+							if (value.length > this.options.enumMaxLength) {
+								passedTest = false
+								break
+							}
+						}
+						
+						if (passedTest) {
+							delete schema.type
+							schema.enum = this.values
+						}
 					}
 				}
 
@@ -215,6 +215,7 @@ class SchemaTrainer extends SchemaTrainerProperty {
 			setMaxNumber: false,
 			setRequired: true,
 			detectEnum: true,
+			enumMaxLength: 10,
 			maxEnum: 4
 		}))
 	}

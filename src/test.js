@@ -12,6 +12,7 @@ let responseItems = []
 
 function testSchema(schema) {
 	console.log(JSON.stringify(schema))
+	console.log(responseItems[0])
 	
 	console.log("Training complete")
 	
@@ -19,6 +20,7 @@ function testSchema(schema) {
 		if (!ajv.validate(schema, responseItems[i])) {
 			console.error("Training item failed to validate")
 			console.log(ajv.errors)
+			console.log(responseItems[i])
 			return
 		}
 	}
@@ -28,57 +30,32 @@ function testSchema(schema) {
 
 console.log("Fetch some JSON")
 
-let allCharacters = []
-let numberOfBooks = 2
-let booksLoaded = 0
+const itemPath = 'https://hacker-news.firebaseio.com/v0/item'
 
-for (let i = 1; i <= numberOfBooks; i++) {
-	Request(`https://anapioficeandfire.com/api/books/${ i }`).then((bookResponse) => {
-		let {characters} = JSON.parse(bookResponse)
+Request(`https://hacker-news.firebaseio.com/v0/topstories.json`).then((response) => {
+	const topStories = JSON.parse(response)
 
-		Array.prototype.push.apply(allCharacters, characters)
+	if (topStories.length > 50) {
+		topStories.length = 50
+	}
 
-		booksLoaded++
+	_.forEach(topStories, (id) => {
+		const url = `${ itemPath }/${ id }.json`
 
-		if (booksLoaded == numberOfBooks) {
-			_.forEach(allCharacters, (url) => {
-				Request(url).then((response) => {
-					const body = JSON.parse(response)
-					
-					responseItems.push(body)
-					schemaTrainer.train(body)
-					
-					if (responseItems.length === characters.length) {
-						testSchema(schemaTrainer.toJS())
-					}
-				}).catch((error) => {
-					console.log("Fetch error")
-					console.error(error)
-					console.log(error.stack)
-					throw error
-				})
-			})
-		}
+		Request(url).then((response) => {
+			const body = JSON.parse(response)
+			
+			responseItems.push(body)
+			schemaTrainer.train(body)
+			
+			if (responseItems.length === topStories.length) {
+				testSchema(schemaTrainer.toJS())
+			}
+		}).catch((error) => {
+			console.log("Fetch error")
+			console.error(error)
+			console.log(error.stack)
+			throw error
+		})
 	})
-}
-
-// http.get({
-//     host: 'nactem.ac.uk',
-//     path: '/software/acromine/dictionary.py?sf=BMI'
-// }, function(response) {
-//     // Continuously update stream with data
-//     console.log(response)
-//     // var body = '';
-//     // response.on('data', function(d) {
-//     //     body += d;
-//     // });
-
-//     // response.on('end', function() {
-//     //     // Data reception is done, do whatever with it!
-//     //     var parsed = JSON.parse(body);
-//     //     callback({
-//     //         email: parsed.email,
-//     //         password: parsed.pass
-//     //     })
-//     // })
-// })
+})
