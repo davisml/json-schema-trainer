@@ -32,8 +32,14 @@ const getSchemaType = (object) => {
 }
 
 // Regex for detecting string formats
-const urlRegex = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i
-const emailRegex = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+const formatRegex = {
+	uri: /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
+	email: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+	hostname: /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/,
+	ipv4: /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/,
+	ipv6: /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i,
+	date: /^\d{4}-\d{1,2}-\d{1,2}$/
+}
 
 // SchemaTrainerProperty represents a JSON Schema object that is being trained.
 // It determines it's types, formats based on the object it's been trained with.
@@ -46,10 +52,7 @@ class SchemaTrainerProperty {
 		this.types = {}
 		this.values = []
 		this.properties = {}
-		this.formats = {
-			uri: true,
-			email: true
-		}
+		this.formats = _.mapObject(formatRegex, () => true)
 		this.formatsValid = false
 	}
 
@@ -69,13 +72,14 @@ class SchemaTrainerProperty {
 
 		switch(type) {
 			case 'string':
-				if (this.formats.uri && !urlRegex.test(object)) {
-					this.formats.uri = false
-				}
-
-				if (this.formats.email && !emailRegex.test(object)) {
-					this.formats.email = false
-				}
+				// Loop through potential formats
+				// and falsify those that aren't matches
+				_.forEach(this.formats, (shouldTest, format) => {
+					// Test the string value against the regex for the format
+					if (shouldTest && !formatRegex[format].test(object)) {
+						this.formats[format] = false
+					}
+				})
 
 				this.formatsValid = true
 				this.values = _.union(this.values, [object])
@@ -127,7 +131,7 @@ class SchemaTrainerProperty {
 				}
 				
 				const itemsProp = this.getProperty('items')
-				
+
 				_.forEach(object, (item) => itemsProp.train(item))
 
 				return
@@ -188,7 +192,7 @@ class SchemaTrainerProperty {
 				if (formats.length > 0) {
 					schema.format = formats[0]
 				} else {
-					if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
+					if (this.options.detectEnum && this.values.length > 1 && this.values.length <= this.options.maxEnum) {
 						let passedTest = true
 
 						for (let i = 0; i < this.values.length; i++) {

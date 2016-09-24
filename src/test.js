@@ -24,7 +24,7 @@ function testSchema(schema) {
 			return
 		}
 	}
-
+	
 	console.log("All " + responseItems.length + " training items validated")
 }
 

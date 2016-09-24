@@ -8,7 +8,7 @@ Create JSON Schemas through training with objects.
 * Set required properties
 * Set minimum number value
 * Set minimum array length
-* Detect string format (uri and email supported)
+* Detect string format (uri, email, hostname, ipv4, ipv6, date)
 * Create enum properties based on the number of options
 
 ## Example
