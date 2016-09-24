@@ -18,7 +18,7 @@ function testSchema(schema) {
 	for (let i = 0; i < responseItems.length; i++) {
 		if (!ajv.validate(schema, responseItems[i])) {
 			console.error("Training item failed to validate")
-			console.log(data)
+			console.log(ajv.errors)
 			return
 		}
 	}
@@ -28,33 +28,39 @@ function testSchema(schema) {
 
 console.log("Fetch some JSON")
 
-Request('https://anapioficeandfire.com/api/books/1').then((bookResponse) => {
-	let {characters} = JSON.parse(bookResponse)
+let allCharacters = []
+let numberOfBooks = 2
+let booksLoaded = 0
 
-	if (characters.length > 100) {
-		characters.length = 100
-	}
+for (let i = 1; i <= numberOfBooks; i++) {
+	Request(`https://anapioficeandfire.com/api/books/${ i }`).then((bookResponse) => {
+		let {characters} = JSON.parse(bookResponse)
 
-	console.log(`Train with ${ characters.length } different characters`)
-	
-	_.forEach(characters, (url) => {
-		Request(url).then((response) => {
-			const body = JSON.parse(response)
-			
-			responseItems.push(body)
-			schemaTrainer.train(body)
-			
-			if (responseItems.length === characters.length) {
-				testSchema(schemaTrainer.toJS())
-			}
-		}).catch((error) => {
-			console.log("Fetch error")
-			console.error(error)
-			console.log(error.stack)
-			throw error
-		})
+		Array.prototype.push.apply(allCharacters, characters)
+
+		booksLoaded++
+
+		if (booksLoaded == numberOfBooks) {
+			_.forEach(allCharacters, (url) => {
+				Request(url).then((response) => {
+					const body = JSON.parse(response)
+					
+					responseItems.push(body)
+					schemaTrainer.train(body)
+					
+					if (responseItems.length === characters.length) {
+						testSchema(schemaTrainer.toJS())
+					}
+				}).catch((error) => {
+					console.log("Fetch error")
+					console.error(error)
+					console.log(error.stack)
+					throw error
+				})
+			})
+		}
 	})
-})
+}
 
 // http.get({
 //     host: 'nactem.ac.uk',

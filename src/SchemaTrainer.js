@@ -1,4 +1,5 @@
 import _ from 'underscore'
+// import AJV from 'ajv'
 
 const getSchemaType = (object) => {
 	if (_.isNull(object)) {
@@ -16,6 +17,22 @@ const getSchemaType = (object) => {
 	}
 }
 
+// const emailRegex = 
+const urlRegex = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i
+const emailRegex = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+// const urlSchema = {
+// 	type: 'string',
+// 	pattern: "^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.​\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[​6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1​,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00​a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u​00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$"
+// }
+
+// const emailSchema = {
+//   "type": 'string',
+//   "pattern": "/^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i"
+// }
+
+// const ajv = new AJV
+// const validURL = ajv.compile(urlSchema)
+
 class SchemaTrainerProperty {
 	constructor(options) {
 		this.options = options
@@ -24,6 +41,11 @@ class SchemaTrainerProperty {
 		this.types = {}
 		this.values = []
 		this.properties = {}
+		this.formats = {
+			uri: true,
+			email: true
+		}
+		this.formatsValid = false
 	}
 
 	getProperty(key) {
@@ -42,26 +64,34 @@ class SchemaTrainerProperty {
 
 		switch(type) {
 			case 'string':
+				if (!urlRegex.test(object)) {
+					this.formats.uri = false
+				}
+
+				if (!emailRegex.test(object)) {
+					this.formats.email = false
+				}
+
+				this.formatsValid = true
 				this.values = _.union(this.values, [object])
+
 				return
 
 			case 'number':
 				this.values = _.union(this.values, [object])
 
 				if (options.setMinNumber) {
-					if (_.has(this, 'minNumber')) {
+					if (_.has(this, 'minNumber'))
 						this.minNumber = Math.max(object, this.minNumber)
-					} else {
+					else
 						this.minNumber = object
-					}
 				}
 
 				if (options.setMaxNumber) {
-					if (_.has(this, 'maxNumber')) {
+					if (_.has(this, 'maxNumber'))
 						this.maxNumber = Math.min(object, this.maxNumber)
-					} else {
+					else
 						this.maxNumber = object
-					}
 				}
 
 				return
@@ -74,11 +104,10 @@ class SchemaTrainerProperty {
 				if (options.setRequired) {
 					const required = _.keys(object)
 
-					if (!this.requiredProperties) {
+					if (!this.requiredProperties)
 						this.requiredProperties = required
-					} else {
+					else
 						this.requiredProperties = _.intersection(required)
-					}
 				}
 
 				return
@@ -108,7 +137,7 @@ class SchemaTrainerProperty {
 		
 		let schema = {}
 		let type = null
-		
+
 		// Check if we're defined as a boolean and a number
 		if (this.types.number && this.types.boolean && types.length == 2) {
 			schema.type = type = 'number'
@@ -121,15 +150,13 @@ class SchemaTrainerProperty {
 				schema.type = types
 			}
 		}
-		
+
 		switch(type) {
-			case 'array': {
+			case 'array':
 				schema.item = this.getProperty('item').toJS()
-
 				return schema
-			}
 
-			case 'object': {
+			case 'object':
 				schema.properties = {}
 
 				_.forEach(this.properties, (schemaProp, key) => {
@@ -137,33 +164,41 @@ class SchemaTrainerProperty {
 				})
 
 				// Add required properties if we have them set
-				if (this.requiredProperties && this.requiredProperties.length > 0) {
+				if (this.requiredProperties && this.requiredProperties.length > 0)
 					schema.required = this.requiredProperties
+
+				return schema
+
+			case 'string':
+				let formats = []
+
+				if (this.formatsValid) {
+					_.forEach(this.formats, (enabled, format) => {
+						if (enabled) {
+							formats.push(format)
+						}
+					})
+				}
+
+				if (formats.length > 0) {
+					schema.format = formats[0]
+				} else {
+					if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
+						delete schema.type
+						schema.enum = this.values
+					}
 				}
 
 				return schema
-			}
 
-			case 'string': {
-				if (this.options.detectEnum && this.values.length <= this.options.maxEnum) {
-					delete schema.type
-					schema.enum = this.values
-				}
-
-				return schema
-			}
-
-			case 'number': {
-				if (options.setMinNumber) {
+			case 'number':
+				if (options.setMinNumber)
 					schema.minimum = this.minNumber
-				}
 
-				if (options.setMaxNumber) {
+				if (options.setMaxNumber)
 					schema.maximum = this.maxNumber
-				}
 
 				return schema
-			}
 
 			default:
 				return schema
@@ -180,7 +215,7 @@ class SchemaTrainer extends SchemaTrainerProperty {
 			setMaxNumber: false,
 			setRequired: true,
 			detectEnum: true,
-			maxEnum: 2
+			maxEnum: 4
 		}))
 	}
 }
