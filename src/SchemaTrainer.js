@@ -219,6 +219,12 @@ class SchemaTrainer extends SchemaTrainerProperty {
 			maxEnum: 4
 		}))
 	}
+
+	toJS() {
+		return _.extend({
+			$schema: "http://json-schema.org/draft-04/schema#"
+		}, super.toJS())
+	}
 }
 
 export default SchemaTrainer
