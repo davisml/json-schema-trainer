@@ -238,4 +238,6 @@ class SchemaTrainer extends SchemaTrainerProperty {
 	}
 }
 
-export default SchemaTrainer
+// export default SchemaTrainer
+exports.default = SchemaTrainer
+module.exports = exports['default']
