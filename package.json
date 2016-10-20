@@ -1,6 +1,10 @@
 {
   "name": "json-schema-trainer",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davisml/json-schema-trainer"
+  },
   "description": "Create JSON Schemas by training with objects",
   "main": "dist.js",
   "scripts": {
